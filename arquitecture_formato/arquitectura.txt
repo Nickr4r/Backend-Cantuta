@@ -1,0 +1,37 @@
+Tienes mucha razón. Vamos a ajustar las definiciones para que coincidan exactamente con el modelo de 3 Tiers (Capas) que mostraste en la imagen. En ese modelo, la Persistencia es una capa específica y el Dominio es el corazón.
+Aquí tienes la estructura corregida con el significado preciso de cada parte según tu diagrama:
+Estructura del Proyecto (Corregida)
+code
+Text
+backend/
+├── app/
+│   ├── main.py                # Punto de entrada (Configuración global de FastAPI)
+│   ├── core/                  # Seguridad y Configuración (Transversal a todas las capas)
+│   │
+│   ├── api/                   # [CAPA DE PRESENTACIÓN] (Tier 2 - Presentation)
+│   │   ├── v1/                # Controladores de entrada (Reciben Requests, devuelven Responses)
+│   │   └── schemas/           # View Models / DTOs (Validan los datos que entran y salen de la API)
+│   │
+│   ├── application/           # [CAPA DE APLICACIÓN] (Tier 2 - Application)
+│   │   └── services/          # Orquestadores (Lógica de "Casos de Uso", coordinan el flujo de datos)
+│   │
+│   ├── domain/                # [CAPA DE DOMINIO] (Tier 2 - Domain Model)
+│   │   └── models.py          # Entidades (La definición pura de tus tablas y reglas de negocio)
+│   │
+│   └── infrastructure/        # [CAPA DE PERSISTENCIA E INFRAESTRUCTURA] (Tier 2 & 3)
+│       ├── repositories/      # [PERSISTENCE] (Consultas SQL, el único que toca el ORM directamente)
+│       ├── database.py        # [DATA ACCESS] (Configuración de la conexión a la Base de Datos)
+│       └── external/          # [INFRASTRUCTURE] (Herramientas externas: OCR, Generadores de PDF)
+│
+├── .env                       # Variables de entorno
+└── requirements.txt           # Dependencias
+
+Explicación corregida según tu Diagrama de 3 Capas:
+Capa en tu Imagen	Nombre en el Proyecto	Significado Real y Función
+1st Tier: User Interface	Fuera del Backend	Es el navegador o la App Móvil que consume tu API.
+Presentation	app/api/	Controladores de Entrada: Reciben el JSON del usuario, lo validan con Schemas y lo pasan a la capa de Aplicación. No saben nada de SQL.
+Application	app/application/	Casos de Uso: Es el cerebro que dice: "Primero verifica el usuario, luego procesa la imagen, luego calcula el promedio". Coordina a los demás.
+Domain Model	app/domain/	Entidades: Son las clases de SQLAlchemy. Representan el "qué" es el sistema (un Alumno, una Nota). Es la capa más importante y central.
+Persistence	app/infrastructure/repositories/	Repositorios: Es la única parte que escribe db.add() o db.query(). Su trabajo es guardar y recuperar objetos del Dominio.
+Infrastructure	app/infrastructure/external/	Herramientas de Apoyo: Implementaciones de librerías que no son del negocio (como el motor de OCR o el motor de PDF).
+3rd Tier: Data	PostgreSQL / MySQL	Motor de Datos: Donde se guardan físicamente los archivos y registros
