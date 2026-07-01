@@ -1,3 +1,4 @@
+# app/api/v1/dependencies.py
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
@@ -6,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.core.security import SECRET_KEY, ALGORITHM
 from app.infrastructure.database import get_db
 from app.infrastructure.repositories.user_repository import UserRepository
+from app.core.roles import RoleID
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
 
@@ -40,7 +42,8 @@ def get_current_user(
     return user
 
 def admin_required(current_user = Depends(get_current_user)):
-    if current_user.id_rol not in [1, 2]:
+    # USAMOS LOS ROLES DEFINIDOS EN EL ENUM
+    if current_user.id_rol not in [RoleID.DIRECTOR, RoleID.ADMINISTRATIVO]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN, 
             detail="Acceso denegado: Se requiere rol de Director o Administrativo"

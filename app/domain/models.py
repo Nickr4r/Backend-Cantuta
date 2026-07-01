@@ -29,6 +29,7 @@ class Alumno(Base):
     usuario = relationship("Usuario", back_populates="alumno", uselist=False)
     matriculas = relationship("Matricula", back_populates="alumno")
 
+
 class Docente(Base):
     __tablename__ = "docentes"
     id_docente = Column(Integer, primary_key=True, autoincrement=True)
@@ -44,21 +45,42 @@ class Docente(Base):
     asignaciones = relationship("AsignacionDocente", back_populates="docente")
 
 
+class PersonalAdministrativo(Base):
+    __tablename__ = "personal_administrativo"
+    id_personal = Column(Integer, primary_key=True, autoincrement=True)
+    dni = Column(String(15), unique=True)
+    nombres = Column(String(100), nullable=False)
+    apellidos = Column(String(100), nullable=False)
+    cargo = Column(String(50))
+    telefono = Column(String(20))
+    correo = Column(String(100))
+    estado = Column(Enum('activo', 'inactivo'), default='activo')
+
+    usuario = relationship("Usuario", back_populates="personal", uselist=False)
+
+
 class Usuario(Base):
     __tablename__ = "usuarios"
     id_usuario = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(50), nullable=False, unique=True)
     password_hash = Column(String(255), nullable=False)
     id_rol = Column(Integer, ForeignKey("roles.id_rol"), nullable=False)
+    
+    # Llaves foráneas para vinculación
     id_docente = Column(Integer, ForeignKey("docentes.id_docente"), unique=True, nullable=True)
     id_alumno = Column(Integer, ForeignKey("alumnos.id_alumno"), unique=True, nullable=True)
+    id_personal = Column(Integer, ForeignKey("personal_administrativo.id_personal"), unique=True, nullable=True)
+    
     ultimo_acceso = Column(TIMESTAMP, nullable=True)
     estado = Column(Enum('activo', 'inactivo'), default='activo')
     fecha_creacion = Column(TIMESTAMP, server_default=func.now())
 
+    # Relaciones
     rol = relationship("Role", back_populates="usuarios")
     docente = relationship("Docente", back_populates="usuario")
     alumno = relationship("Alumno", back_populates="usuario")
+    personal = relationship("PersonalAdministrativo", back_populates="usuario")
+    
     notas_registradas = relationship("Nota", back_populates="usuario_registrador")
     registros_ocr = relationship("RegistroOCR", back_populates="usuario")
     reportes = relationship("ReporteGenerado", back_populates="usuario")
@@ -71,13 +93,14 @@ class Curso(Base):
     descripcion = Column(Text)
     estado = Column(Enum('activo', 'inactivo'), default='activo')
 
+
 class Salon(Base):
     __tablename__ = "salones"
     id_salon = Column(Integer, primary_key=True, autoincrement=True)
     grado = Column(String(20), nullable=False)
     seccion = Column(String(10), nullable=False)
     nivel = Column(Enum('Inicial', 'Primaria', 'Secundaria'), nullable=False)
-    anio_escolar = Column(Integer, nullable=False) # Year se mapea como Integer
+    anio_escolar = Column(Integer, nullable=False)
     turno = Column(Enum('mañana', 'tarde', 'noche'))
     capacidad = Column(Integer, default=30)
     estado = Column(Enum('activo', 'inactivo'), default='activo')
@@ -120,7 +143,7 @@ class AsignacionDocente(Base):
 class Nota(Base):
     __tablename__ = "notas"
     id_nota = Column(Integer, primary_key=True, autoincrement=True)
-    id_evaluacion = Column(Integer, ForeignKey("evaluaciones.id_evaluacion"), nullable=False)
+    id_evaluacion = Column(Integer, nullable=False) # Falta tabla evaluaciones
     id_matricula = Column(Integer, ForeignKey("matriculas.id_matricula"), nullable=False)
     nota = Column(DECIMAL(5, 2), nullable=False)
     origen = Column(Enum('manual', 'ocr'), default='manual')
@@ -158,5 +181,3 @@ class ReporteGenerado(Base):
     fecha_generacion = Column(TIMESTAMP, server_default=func.now())
 
     usuario = relationship("Usuario", back_populates="reportes")
-
-#nota, faltan agregar algunas tablas

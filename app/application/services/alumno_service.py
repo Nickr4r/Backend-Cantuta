@@ -1,18 +1,35 @@
-from sqlalchemy.orm import Session
+from fastapi import HTTPException
 from app.infrastructure.repositories.alumno_repository import AlumnoRepository
 from app.domain.models import Alumno
-from fastapi import HTTPException
 
 class AlumnoService:
-    def __init__(self, db: Session):
-        self.alumno_repo = AlumnoRepository(db)
+    def __init__(self, db):
+        self.repo = AlumnoRepository(db)
 
-    def registrar_alumno(self, datos_alumno):
-        # Regla: No pueden haber dos alumnos con el mismo DNI
-        existente = self.alumno_repo.get_by_dni(datos_alumno.dni)
-        if existente:
-            raise HTTPException(status_code=400, detail="El DNI ya pertenece a otro alumno")
-        
-        # Convertimos el Schema a Modelo de DB
-        nuevo_alumno = Alumno(**datos_alumno.model_dump())
-        return self.alumno_repo.create(nuevo_alumno)
+    def listar_todos(self):
+        return self.repo.get_all()
+
+    def obtener_por_id(self, id_alumno: int):
+        alumno = self.repo.get_by_id(id_alumno)
+        if not alumno:
+            raise HTTPException(status_code=404, detail="Alumno no encontrado")
+        return alumno
+
+    def registrar_alumno(self, datos):
+        if self.repo.get_by_dni(datos.dni):
+            raise HTTPException(status_code=400, detail="DNI ya registrado")
+        nuevo_alumno = Alumno(**datos.model_dump())
+        return self.repo.create(nuevo_alumno)
+
+    def actualizar_alumno(self, id_alumno: int, datos_nuevos):
+        alumno = self.obtener_por_id(id_alumno)
+        for key, value in datos_nuevos.model_dump(exclude_unset=True).items():
+            setattr(alumno, key, value)
+        self.repo.update()
+        return alumno
+
+    def eliminar_alumno(self, id_alumno: int):
+        alumno = self.obtener_por_id(id_alumno)
+        alumno.estado = "inactivo" # Borrado lógico
+        self.repo.update()
+        return {"message": "Alumno dado de baja correctamente"}

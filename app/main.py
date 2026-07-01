@@ -5,8 +5,7 @@ from sqlalchemy import text
 from app.infrastructure.database import get_db
 
 # Importamos los routers de la capa de presentación
-from app.api.v1.endpoints import auth
-from app.api.v1.endpoints import auth, alumnos
+from app.api.v1.endpoints import auth, alumnos, docentes, personal
 
 app = FastAPI(
     title="Sistema Cantuta Backend - API",
@@ -18,6 +17,8 @@ app = FastAPI(
 
 app.include_router(auth.router, prefix="/api/v1/auth", tags=["Autenticación"])
 app.include_router(alumnos.router, prefix="/api/v1/alumnos", tags=["Gestión de Alumnos"])
+app.include_router(docentes.router, prefix="/api/v1/docentes", tags=["Gestión de Docentes"])
+app.include_router(personal.router, prefix="/api/v1/personal", tags=["Gestión de Personal"])
 
 @app.get("/")
 def home():

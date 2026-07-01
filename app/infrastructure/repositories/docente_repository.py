@@ -5,6 +5,12 @@ class DocenteRepository:
     def __init__(self, db: Session):
         self.db = db
 
+    def get_all(self):
+        return self.db.query(Docente).all()
+
+    def get_by_id(self, id_docente: int):
+        return self.db.query(Docente).filter(Docente.id_docente == id_docente).first()
+
     def get_by_dni(self, dni: str):
         return self.db.query(Docente).filter(Docente.dni == dni).first()
 
@@ -14,5 +20,5 @@ class DocenteRepository:
         self.db.refresh(docente_obj)
         return docente_obj
 
-    def get_all(self):
-        return self.db.query(Docente).all()
+    def update(self):
+        self.db.commit()
