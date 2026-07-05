@@ -5,8 +5,7 @@ class UserCreate(BaseModel):
     username: str
     password: str
     id_rol: int
-    id_docente: Optional[int] = None
-    id_alumno: Optional[int] = None
+    dni_vinculo: Optional[str] = None
 
 class UserLogin(BaseModel):
     username: str
