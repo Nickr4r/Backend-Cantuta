@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Enum, TIMESTAMP, Date, Text, DECIMAL, func, CheckConstraint, UniqueConstraint
+from sqlalchemy import Column, Integer, Boolean, String, ForeignKey, Enum, TIMESTAMP, Date, Text, DECIMAL, func, CheckConstraint, UniqueConstraint
 from sqlalchemy.orm import relationship
 from app.infrastructure.database import Base
 
@@ -58,13 +58,13 @@ class PersonalAdministrativo(Base):
 
     usuario = relationship("Usuario", back_populates="personal", uselist=False)
 
-
 class Usuario(Base):
     __tablename__ = "usuarios"
     id_usuario = Column(Integer, primary_key=True, autoincrement=True)
     username = Column(String(50), nullable=False, unique=True)
     password_hash = Column(String(255), nullable=False)
     id_rol = Column(Integer, ForeignKey("roles.id_rol"), nullable=False)
+    requiere_cambio_pwd = Column(Boolean, default=True, nullable=False)
     
     # Llaves foráneas para vinculación
     id_docente = Column(Integer, ForeignKey("docentes.id_docente"), unique=True, nullable=True)
@@ -85,6 +85,30 @@ class Usuario(Base):
     registros_ocr = relationship("RegistroOCR", back_populates="usuario")
     reportes = relationship("ReporteGenerado", back_populates="usuario")
 
+    # --- PROPIEDAD VIRTUAL PARA EL FRONTEND ---
+    @property
+    def dni_vinculado(self):
+        """
+        Retorna el DNI de la persona vinculada (sea alumno, docente o personal).
+        Si no hay vínculo, retorna None.
+        """
+        if self.alumno:
+            return self.alumno.dni
+        if self.docente:
+            return self.docente.dni
+        if self.personal:
+            return self.personal.dni
+        return None
+
+    @property
+    def nombre_completo(self):
+        """
+        Opcional: También podrías devolver el nombre completo para el Frontend.
+        """
+        p = self.alumno or self.docente or self.personal
+        if p:
+            return f"{p.nombres} {p.apellidos}"
+        return "Usuario de Sistema"
 
 class Curso(Base):
     __tablename__ = "cursos"

@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.infrastructure.database import get_db
 from app.api.schemas.docente_schema import DocenteCreate, DocenteResponse, DocenteUpdate
 from app.application.services.docente_service import DocenteService
-from app.api.v1.dependencies import admin_required
+from app.api.v1.dependencies import admin_required, get_current_user # IMPORTAR AMBOS
 from typing import List
 
 router = APIRouter()
@@ -13,8 +13,13 @@ def listar(db: Session = Depends(get_db), current_user = Depends(admin_required)
     return DocenteService(db).listar_todos()
 
 @router.get("/{id_docente}", response_model=DocenteResponse, summary="Obtener un docente por ID")
-def obtener(id_docente: int, db: Session = Depends(get_db), current_user = Depends(admin_required)):
-    return DocenteService(db).obtener_por_id(id_docente)
+def obtener(
+    id_docente: int, 
+    db: Session = Depends(get_db), 
+    current_user = Depends(get_current_user) # <--- CAMBIADO: Permite el acceso al dueño del perfil
+):
+    # Pasamos el current_user para validar que el docente solo vea su propia info
+    return DocenteService(db).obtener_por_id(id_docente, current_user)
 
 @router.post("/", response_model=DocenteResponse, status_code=status.HTTP_201_CREATED, summary="Registrar nuevo docente")
 def crear(datos: DocenteCreate, db: Session = Depends(get_db), current_user = Depends(admin_required)):

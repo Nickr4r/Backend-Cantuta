@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.infrastructure.database import get_db
 from app.api.schemas.alumno_schema import AlumnoCreate, AlumnoResponse, AlumnoUpdate
 from app.application.services.alumno_service import AlumnoService
-from app.api.v1.dependencies import admin_required
+from app.api.v1.dependencies import admin_required, get_current_user # IMPORTAR AMBOS
 from typing import List
 
 router = APIRouter()
@@ -13,8 +13,13 @@ def listar(db: Session = Depends(get_db), current_user = Depends(admin_required)
     return AlumnoService(db).listar_todos()
 
 @router.get("/{id_alumno}", response_model=AlumnoResponse, summary="Obtener un alumno por ID")
-def obtener(id_alumno: int, db: Session = Depends(get_db), current_user = Depends(admin_required)):
-    return AlumnoService(db).obtener_por_id(id_alumno)
+def obtener(
+    id_alumno: int, 
+    db: Session = Depends(get_db), 
+    current_user = Depends(get_current_user) # <--- AHORA CUALQUIER USUARIO LOGUEADO
+):
+    # IMPORTANTE: Pasamos el current_user al servicio para validar identidad
+    return AlumnoService(db).obtener_por_id(id_alumno, current_user)
 
 @router.post("/", response_model=AlumnoResponse, status_code=status.HTTP_201_CREATED, summary="Registrar alumno")
 def crear(datos: AlumnoCreate, db: Session = Depends(get_db), current_user = Depends(admin_required)):

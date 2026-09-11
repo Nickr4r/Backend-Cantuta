@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from app.infrastructure.database import get_db
 from app.api.schemas.personal_schema import PersonalCreate, PersonalResponse, PersonalUpdate
 from app.application.services.personal_service import PersonalService
-from app.api.v1.dependencies import admin_required
+from app.api.v1.dependencies import admin_required, get_current_user # IMPORTAR AMBOS
 from typing import List
 
 router = APIRouter()
@@ -16,13 +16,18 @@ def listar(db: Session = Depends(get_db), current_user = Depends(admin_required)
 def crear(datos: PersonalCreate, db: Session = Depends(get_db), current_user = Depends(admin_required)):
     return PersonalService(db).registrar_personal(datos)
 
+@router.get("/{id_personal}", response_model=PersonalResponse, summary="Obtener personal por ID")
+def obtener(
+    id_personal: int, 
+    db: Session = Depends(get_db), 
+    current_user = Depends(get_current_user) # <--- CAMBIADO
+):
+    # Pasamos el usuario actual para validar permisos en el servicio
+    return PersonalService(db).obtener_por_id(id_personal, current_user)
+
 @router.patch("/{id_personal}", response_model=PersonalResponse, summary="Actualizar personal")
 def actualizar(id_personal: int, datos: PersonalUpdate, db: Session = Depends(get_db), current_user = Depends(admin_required)):
     return PersonalService(db).actualizar_personal(id_personal, datos)
-
-@router.get("/{id_personal}", response_model=PersonalResponse, summary="Obtener personal por ID")
-def obtener(id_personal: int, db: Session = Depends(get_db), current_user = Depends(admin_required)):
-    return PersonalService(db).obtener_por_id(id_personal)
 
 @router.delete("/{id_personal}", summary="Dar de baja a personal")
 def eliminar(id_personal: int, db: Session = Depends(get_db), current_user = Depends(admin_required)):
